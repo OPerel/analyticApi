@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // Connect to db
-const mongoDB = `${process.env.MONGODB}/analyticDB`;
+const mongoDB = `${process.env.MONGODB}`;
 mongoose.connect(mongoDB, {useNewUrlParser: true, useUnifiedTopology: true});
 
 // Get the default connection
