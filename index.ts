@@ -22,7 +22,7 @@ db.once('open', function() {
 });
 
 // Define uniqueUser schema and model
-const userSchema = new mongoose.Schema({ cookieId: String });
+const userSchema = new mongoose.Schema({});
 const User = mongoose.model('User', userSchema, 'uniqueUsers');
 
 // Define pageHit schema and model
@@ -38,19 +38,19 @@ const PageHit = mongoose.model('PageHit', pageHitSchema, 'pageHits');
 
 /*** Users Endpoints ***/
 
-app.get('/users', (req, res) => {
-  User.find((err, users) => {
-    if (err) {
-      console.log('error getting users: ', err);
-      res.status(500).json(err);
-    }
-    console.log('users: ', users)
-    res.status(200).json(users);
-  })
-});
+// app.get('/users', (req, res) => {
+//   User.find((err, users) => {
+//     if (err) {
+//       console.log('error getting users: ', err);
+//       res.status(500).json(err);
+//     }
+//     console.log('users: ', users)
+//     res.status(200).json(users);
+//   })
+// });
 
 app.get('/uniqueUser', (req, res) => {
-  User.findOne({ cookieId: req.query.cookieId }, (err: Error, user: { cookieId: string }) => {
+  User.findById(req.query.userId, (err: Error, user: { _id: string }) => {
     if (err) {
       console.log('error getting unique user: ', err);
       res.status(500).json(err);
@@ -61,7 +61,7 @@ app.get('/uniqueUser', (req, res) => {
 });
 
 app.post('/newUniqueUser', (req, res) => {
-  const newUser = new User({ cookieId: req.body.cookieId });
+  const newUser = new User({});
   newUser.save((err, user) => {
     if (err) {
       console.log('error creating unique user: ', err);
@@ -75,15 +75,20 @@ app.post('/newUniqueUser', (req, res) => {
 /*** Page Hits Endpoints ***/
 
 app.post('/newPageHit', (req, res) => {
-  const newPageHit = new PageHit({ ...req.body });
-  newPageHit.save((err, pageHit) => {
-    if (err) {
-      console.log('error creating new page hit: ', err);
-      res.status(500).json(err);
-    }
-    console.log('page hit created: ', pageHit)
-    res.status(200).json(pageHit);
-  })
+  if (req.body.IP !== '109.65.80.116') {
+    const newPageHit = new PageHit({ ...req.body });
+    newPageHit.save((err, pageHit) => {
+      if (err) {
+        console.log('error creating new page hit: ', err);
+        res.status(500).json(err);
+      }
+      console.log('page hit created: ', pageHit)
+      res.status(200).json(pageHit);
+    })
+  } else {
+    console.log('hello ori')
+    res.status(200).json('hello ori');
+  }
 });
 
 const { PORT } = process.env;
