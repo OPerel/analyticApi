@@ -22,7 +22,7 @@ db.once('open', function() {
 });
 
 // Define uniqueUser schema and model
-const userSchema = new mongoose.Schema({});
+const userSchema = new mongoose.Schema({}, { timestamps: { createdAt: true, updatedAt: false } });
 const User = mongoose.model('User', userSchema, 'uniqueUsers');
 
 // Define pageHit schema and model
@@ -33,7 +33,7 @@ const pageHitSchema = new mongoose.Schema({
   country: String,
   city: String,
   IP: String
-});
+}, { timestamps: { createdAt: true, updatedAt: false } });
 const PageHit = mongoose.model('PageHit', pageHitSchema, 'pageHits');
 
 /*** Users Endpoints ***/
