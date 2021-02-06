@@ -75,7 +75,7 @@ app.post('/newUniqueUser', (req, res) => {
 /*** Page Hits Endpoints ***/
 
 app.post('/newPageHit', (req, res) => {
-  if (req.body.IP !== '109.65.80.116') {
+  if (req.body.IP !== process.env.MY_IP) {
     const newPageHit = new PageHit({ ...req.body });
     newPageHit.save((err, pageHit) => {
       if (err) {
