@@ -91,7 +91,24 @@ app.post('/newPageHit', (req, res) => {
   }
 });
 
+/*** Errors ***/
+const errorSchema = new mongoose.Schema({ newErr: Error }, { timestamps: true });
+const NewError = mongoose.model('NewError', errorSchema, 'errorsLog');
+
+app.post('/logErrors', (req, res) => {
+  const newErr = new NewError({ ...req.body });
+  newErr.save((err, newErr) => {
+    if (err) {
+      console.log('error logging client newErr: ', err);
+      res.status(500).json(err);
+    }
+    console.log('client newErr created: ', newErr);
+    res.status(200).json();
+  })
+})
+
+
 const { PORT } = process.env;
 app.listen(PORT, () => {
-  console.log(`⚡️[server]: Server is running at https://localhost:${PORT}`);
+  console.log(`⚡️[server]: Server is running at port: ${PORT}`);
 });
