@@ -22,7 +22,7 @@ db.once('open', function() {
 });
 
 // Define uniqueUser schema and model
-const userSchema = new mongoose.Schema({}, { timestamps: { createdAt: true, updatedAt: false } });
+const userSchema = new mongoose.Schema({ createdAt: Date }, { timestamps: { createdAt: true, updatedAt: false } });
 const User = mongoose.model('User', userSchema, 'uniqueUsers');
 
 // Define pageHit schema and model
@@ -92,7 +92,7 @@ app.post('/newPageHit', (req, res) => {
 });
 
 /*** Errors ***/
-const errorSchema = new mongoose.Schema({ newErr: Error }, { timestamps: true });
+const errorSchema = new mongoose.Schema({}, { timestamps: true });
 const NewError = mongoose.model('NewError', errorSchema, 'errorsLog');
 
 app.post('/logErrors', (req, res) => {
