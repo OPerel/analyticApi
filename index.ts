@@ -8,6 +8,16 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+// handle cors
+const corsHandler = (req: any, res: any, next: any) => {
+  const { origin } = req.headers;
+  console.log('origin: ', origin)
+  if (origin !== process.env.DASHBOARD_URL) {
+    res.status(400).json('origin not allowed'); 
+  }
+  next();
+}
+
 // Connect to db
 const mongoDB = `${process.env.MONGODB}`;
 mongoose.connect(mongoDB, {useNewUrlParser: true, useUnifiedTopology: true});
@@ -31,23 +41,13 @@ const pageHitSchema = new mongoose.Schema({
   referrer: String,
   platform: String,
   country: String,
+  flagSVG: String,
   city: String,
   IP: String
 }, { timestamps: { createdAt: true, updatedAt: false } });
 const PageHit = mongoose.model('PageHit', pageHitSchema, 'pageHits');
 
 /*** Users Endpoints ***/
-
-// app.get('/users', (req, res) => {
-//   User.find((err, users) => {
-//     if (err) {
-//       console.log('error getting users: ', err);
-//       res.status(500).json(err);
-//     }
-//     console.log('users: ', users)
-//     res.status(200).json(users);
-//   })
-// });
 
 app.get('/uniqueUser', (req, res) => {
   User.findById(req.query.userId, (err: Error, user: { _id: string }) => {
@@ -107,6 +107,72 @@ app.post('/logErrors', (req, res) => {
   })
 })
 
+/*** Dashboard ***/
+
+// app.get(
+//   '/users',
+//   (req, res, next) => { next(); },
+//   cors({origin: process.env.DASHBOARD_URL}),
+//   (req, res) => {
+//     User.find((err, users) => {
+//       if (err) {
+//         console.log('error getting users: ', err);
+//         res.status(500).json(err);
+//       }
+//       // console.log('users: ', users);
+//       res.status(200).json(users);
+//     })
+//   }
+// );
+
+// app.get(
+//   '/pageHits',
+//   (req, res, next) => { next(); },
+//   cors({origin: process.env.DASHBOARD_URL}),
+//   (req, res) => {
+//     PageHit.find((err, pageHits) => {
+//       if (err) {
+//         console.log('error getting page hits: ', err);
+//         res.status(500).json(err);
+//       }
+//       // console.log('pageHits: ', pageHits);
+//       res.status(200).json(pageHits);
+//     })
+//   }
+// );
+
+// app.get(
+//   '/pageHitsByDay',
+//   (req, res, next) => { next(); },
+//   cors({origin: process.env.DASHBOARD_URL}),
+//   (req, res) => {
+//     PageHit.aggregate([
+//       {
+//         '$group': {
+//           '_id': {
+//             '$dateToString': {
+//               'format': '%Y-%m-%d', 
+//               'date': '$createdAt'
+//             }
+//           }, 
+//           'count': {
+//             '$sum': 1
+//           }
+//         }
+//       }, {
+//         '$sort': {
+//           '_id': 1
+//         }
+//       }
+//     ]).then(data => {
+//       res.status(200).json(data)
+//     })
+//     .catch(err => {
+//       console.log('Error getting aggregated data: ', err)
+//       res.status(500).json(err);
+//     })
+//   }
+// )
 
 const { PORT } = process.env;
 app.listen(PORT, () => {
