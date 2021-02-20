@@ -2,6 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import verifyAuth from './utils/verifyOktaToken';
 require('dotenv').config();
 
 const app = express();
@@ -109,70 +110,131 @@ app.post('/logErrors', (req, res) => {
 
 /*** Dashboard ***/
 
-// app.get(
-//   '/users',
-//   (req, res, next) => { next(); },
-//   cors({origin: process.env.DASHBOARD_URL}),
-//   (req, res) => {
-//     User.find((err, users) => {
-//       if (err) {
-//         console.log('error getting users: ', err);
-//         res.status(500).json(err);
-//       }
-//       // console.log('users: ', users);
-//       res.status(200).json(users);
-//     })
-//   }
-// );
+app.get(
+  '/usersCount',
+  (req, res, next) => { verifyAuth(req, res, next) },
+  cors({origin: process.env.DASHBOARD_URL}),
+  (req, res) => {
+    User.countDocuments((err, users) => {
+      if (err) {
+        console.log('error getting users: ', err);
+        res.status(500).json(err);
+      }
+      res.status(200).json(users);
+    })
+  }
+);
 
-// app.get(
-//   '/pageHits',
-//   (req, res, next) => { next(); },
-//   cors({origin: process.env.DASHBOARD_URL}),
-//   (req, res) => {
-//     PageHit.find((err, pageHits) => {
-//       if (err) {
-//         console.log('error getting page hits: ', err);
-//         res.status(500).json(err);
-//       }
-//       // console.log('pageHits: ', pageHits);
-//       res.status(200).json(pageHits);
-//     })
-//   }
-// );
+app.get(
+  '/pageHitsCount',
+  (req, res, next) => { verifyAuth(req, res, next) },
+  cors({origin: process.env.DASHBOARD_URL}),
+  (req, res) => {
+    PageHit.countDocuments((err, pageHits) => {
+      if (err) {
+        console.log('error getting page hits: ', err);
+        res.status(500).json(err);
+      }
+      res.status(200).json(pageHits);
+    })
+  }
+);
 
-// app.get(
-//   '/pageHitsByDay',
-//   (req, res, next) => { next(); },
-//   cors({origin: process.env.DASHBOARD_URL}),
-//   (req, res) => {
-//     PageHit.aggregate([
-//       {
-//         '$group': {
-//           '_id': {
-//             '$dateToString': {
-//               'format': '%Y-%m-%d', 
-//               'date': '$createdAt'
-//             }
-//           }, 
-//           'count': {
-//             '$sum': 1
-//           }
-//         }
-//       }, {
-//         '$sort': {
-//           '_id': 1
-//         }
-//       }
-//     ]).then(data => {
-//       res.status(200).json(data)
-//     })
-//     .catch(err => {
-//       console.log('Error getting aggregated data: ', err)
-//       res.status(500).json(err);
-//     })
-//   }
-// )
+app.get(
+  '/pageHitsByDay',
+  (req, res, next) => { verifyAuth(req, res, next) },
+  cors({origin: process.env.DASHBOARD_URL}),
+  (req, res) => {
+    PageHit.aggregate([
+      {
+        '$group': {
+          '_id': {
+            '$dateToString': {
+              'format': '%Y-%m-%d', 
+              'date': '$createdAt'
+            }
+          }, 
+          'count': {
+            '$sum': 1
+          }
+        }
+      }, {
+        '$sort': {
+          '_id': 1
+        }
+      }
+    ]).then(data => {
+      res.status(200).json(data)
+    })
+    .catch(err => {
+      console.log('Error getting aggregated page hits: ', err)
+      res.status(500).json(err);
+    })
+  }
+)
+
+app.get(
+  '/pageHitsByUser',
+  (req, res, next) => { verifyAuth(req, res, next) },
+  cors({origin: process.env.DASHBOARD_URL}),
+  (req, res) => {
+    // needs sorting by first pageHit.createdAt
+    PageHit.aggregate([
+      {
+        '$group': {
+          '_id': {
+            'user': '$userId'
+          }, 
+          'pageHitsCount': {
+            '$sum': 1
+          }, 
+          'pageHits': {
+            '$push': '$$ROOT'
+          }
+        }
+      }
+    ]).then(data => {
+      res.status(200).json(data)
+    })
+    .catch(err => {
+      console.log('Error getting pageHits by user: ', err)
+      res.status(500).json(err);
+    })
+  }
+)
+
+app.get(
+  '/uniqueUsersByDay',
+  (req, res, next) => { verifyAuth(req, res, next) },
+  cors({origin: process.env.DASHBOARD_URL}),
+  (req, res) => {
+    User.aggregate([
+      {
+        '$group': {
+          '_id': {
+            '$dateToString': {
+              'format': '%Y-%m-%d', 
+              'date': '$createdAt'
+            }
+          }, 
+          'count': {
+            '$sum': 1
+          }
+        }
+      }, {
+        '$sort': {
+          '_id': 1
+        }
+      }
+    ]).then(data => {
+      res.status(200).json(data)
+    })
+    .catch(err => {
+      console.log('Error getting aggregated users: ', err)
+      res.status(500).json(err);
+    })
+  }
+)
 
 const { PORT } = process.env;
 app.listen(PORT, () => {
