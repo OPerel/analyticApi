@@ -235,7 +235,7 @@ app.get(
         }
       }, {
         '$sort': {
-          'firstHit': 1
+          'firstHit': -1
         }
       }
     ]).then(data => {
