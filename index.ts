@@ -93,10 +93,11 @@ app.post('/newPageHit', (req, res) => {
 });
 
 /*** Errors ***/
-const errorSchema = new mongoose.Schema({}, { timestamps: true });
+const errorSchema = new mongoose.Schema({ error: String }, { timestamps: true });
 const NewError = mongoose.model('NewError', errorSchema, 'errorsLog');
 
 app.post('/logErrors', (req, res) => {
+  console.log('err body: ', req.body)
   const newErr = new NewError({ ...req.body });
   newErr.save((err, newErr) => {
     if (err) {
@@ -149,10 +150,12 @@ app.get(
       {
         '$group': {
           '_id': {
-            '$dateToString': {
-              'format': '%Y-%m-%d', 
+            '$dayOfYear': {
               'date': '$createdAt'
             }
+          }, 
+          'date': {
+            '$first': '$createdAt'
           }, 
           'count': {
             '$sum': 1
@@ -174,36 +177,6 @@ app.get(
 )
 
 app.get(
-  '/pageHitsByUser',
-  (req, res, next) => { verifyAuth(req, res, next) },
-  cors({origin: process.env.DASHBOARD_URL}),
-  (req, res) => {
-    // needs sorting by first pageHit.createdAt
-    PageHit.aggregate([
-      {
-        '$group': {
-          '_id': {
-            'user': '$userId'
-          }, 
-          'pageHitsCount': {
-            '$sum': 1
-          }, 
-          'pageHits': {
-            '$push': '$$ROOT'
-          }
-        }
-      }
-    ]).then(data => {
-      res.status(200).json(data)
-    })
-    .catch(err => {
-      console.log('Error getting pageHits by user: ', err)
-      res.status(500).json(err);
-    })
-  }
-)
-
-app.get(
   '/uniqueUsersByDay',
   (req, res, next) => { verifyAuth(req, res, next) },
   cors({origin: process.env.DASHBOARD_URL}),
@@ -212,10 +185,12 @@ app.get(
       {
         '$group': {
           '_id': {
-            '$dateToString': {
-              'format': '%Y-%m-%d', 
+            '$dayOfYear': {
               'date': '$createdAt'
             }
+          }, 
+          'date': {
+            '$first': '$createdAt'
           }, 
           'count': {
             '$sum': 1
@@ -231,6 +206,43 @@ app.get(
     })
     .catch(err => {
       console.log('Error getting aggregated users: ', err)
+      res.status(500).json(err);
+    })
+  }
+)
+
+app.get(
+  '/pageHitsByUser',
+  (req, res, next) => { verifyAuth(req, res, next) },
+  cors({origin: process.env.DASHBOARD_URL}),
+  (req, res) => {
+    // needs sorting by first pageHit.createdAt
+    PageHit.aggregate([
+      {
+        '$group': {
+          '_id': {
+            'user': '$userId'
+          }, 
+          'firstHit': {
+            '$first': '$createdAt'
+          }, 
+          'pageHitsCount': {
+            '$sum': 1
+          }, 
+          'pageHits': {
+            '$push': '$$ROOT'
+          }
+        }
+      }, {
+        '$sort': {
+          'firstHit': 1
+        }
+      }
+    ]).then(data => {
+      res.status(200).json(data)
+    })
+    .catch(err => {
+      console.log('Error getting pageHits by user: ', err)
       res.status(500).json(err);
     })
   }
