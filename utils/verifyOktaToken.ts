@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+
 const OktaJwtVerifier = require('@okta/jwt-verifier');
 require('dotenv').config();
 
